@@ -1,0 +1,53 @@
+{
+  "arena_result": {
+    "schema_version": "1.0",
+    "source": "Binance MCP",
+    "pair": "DOGEUSDT",
+    "captured_at": "2026-09-03T09:19:44.536Z",
+    "market_status": "TRADING",
+    "style": "BALANCED",
+    "facts": [
+      { "label": "最新价", "value": "0.083060 USDT", "source": "spot.ticker24hr" },
+      { "label": "24H 涨跌", "value": "+2.480%", "source": "spot.ticker24hr" },
+      { "label": "24H 区间", "value": "0.080130–0.083700", "source": "spot.ticker24hr" },
+      { "label": "24H 成交额", "value": "56.10M USDT", "source": "spot.ticker24hr" },
+      { "label": "前 20 档深度比", "value": "买/卖 0.813", "source": "spot.depth" },
+      { "label": "快照时间", "value": "2026-09-03 17:19 CST", "source": "Binance MCP" }
+    ],
+    "fighters": [
+      {
+        "id": "bull",
+        "score": 68,
+        "claim": "24H 动量仍偏多",
+        "evidence": ["24H 涨幅为 2.480%", "最新价比 24H 加权均价 0.08182942 高约 1.50%"],
+        "counterpoint": "最新价已距 24H 高点不足 0.77%，继续追涨空间受限"
+      },
+      {
+        "id": "bear",
+        "score": 61,
+        "claim": "短线接近区间上沿",
+        "evidence": ["最新价距 24H 高点仅约 0.76%", "24H 高低区间幅度约 4.46%"],
+        "counterpoint": "24H 涨幅仍为正，尚无明确反转数据"
+      },
+      {
+        "id": "whale",
+        "score": 58,
+        "claim": "近端卖盘深度占优",
+        "evidence": ["前 20 档买盘约 3.91M DOGE，卖盘约 4.81M DOGE", "买卖深度比为 0.813，卖盘比买盘多约 23%"],
+        "counterpoint": "订单簿是瞬时快照，挂单可随时撤销，不能单独证明方向"
+      },
+      {
+        "id": "risk",
+        "score": 74,
+        "claim": "追高的盈亏比不足",
+        "evidence": ["价格已靠近 24H 高点，同时近端卖盘较厚", "24H 已上涨 2.480%，等待回踩或突破确认更稳健"],
+        "counterpoint": "若放量突破 0.083700 并维持，等待会错过一段动量"
+      }
+    ],
+    "verdict": "WAIT",
+    "confidence": 67,
+    "largest_risk": "在价格距 24H 高点不足 0.77%且近端卖盘偏厚时追高。",
+    "invalidation": "若价格放量突破并持续站稳 0.083700，同时前 20 档买卖深度比回升至 1.10 以上，则重新审判。",
+    "trade_executed": false
+  }
+}
