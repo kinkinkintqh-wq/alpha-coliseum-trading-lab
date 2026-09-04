@@ -13,20 +13,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Alpha Coliseum: Market Rift | 行情裂隙',
+  title: 'Alpha Coliseum Trading Lab | 交易人格实验场',
   description:
-    '一款由真实市场数据改变战场环境的快节奏策略卡牌游戏。',
+    '用真实历史行情、模拟资金和策略卡牌训练你的交易人格。',
   openGraph: {
-    title: 'Alpha Coliseum: Market Rift',
-    description: '真实行情改变战场，策略决定胜负。',
+    title: 'Alpha Coliseum Trading Lab',
+    description: '训练你的策略，塑造你的交易人格。',
     type: 'website',
-    images: [{ url: '/og.png', width: 1672, height: 941, alt: 'Alpha Coliseum AI Crypto Battle Arena' }],
+    images: [{ url: '/game-art/market-rift-keyart-v1.png', width: 1536, height: 1024, alt: 'Alpha Coliseum Trading Lab' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Alpha Coliseum: Market Rift',
-    description: '真实行情改变战场，策略决定胜负。',
-    images: ['/og.png'],
+    title: 'Alpha Coliseum Trading Lab',
+    description: '训练你的策略，塑造你的交易人格。',
+    images: ['/game-art/market-rift-keyart-v1.png'],
   },
 };
 

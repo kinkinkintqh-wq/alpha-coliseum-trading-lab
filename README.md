@@ -1,46 +1,37 @@
-# Alpha Coliseum｜AI 币圈斗兽场
+# Alpha Coliseum Trading Lab｜交易人格实验场
 
-Alpha Coliseum 是一个用 **Binance Agent OS** 搭建的市场分析 Agent。它把同一份 Binance 实时数据交给四个对立角色：多头、空头、巨鲸侦探和风险刺客。四方必须引用证据进行三轮对战，最后交付一张可解释的 BUY / WAIT / AVOID 裁决卡。
+Alpha Coliseum Trading Lab 是一款由真实市场数据驱动的虚拟交易学习游戏。玩家选择指标、调整参数并组建策略卡组，系统据此形成一套交易人格；随后玩家和电脑在同一段未知的真实历史行情中，使用 10,000 USDT 模拟资金进行现货交易。
 
-## 参赛定位
+## 首版产品边界
 
-- 活动要求：用 Binance Agent OS 搭建你的 AI Agent
-- 申报主题：数据分析
-- 核心 Agent：Codex 中的 Alpha Coliseum Referee 工作流
-- 数据工具：Binance MCP（读取市场数据）
-- 演示层：热血漫画风互动斗兽场，支持中英文切换和角色自定义
-- 交易原则：默认只分析；任何真实交易必须再次明确确认
+- BTC、ETH、DOGE 三种模拟市场
+- Binance Spot 公开历史 K 线加速回放
+- 模拟现货买入、减仓、卖出、手续费和滑点
+- MA、MACD、WR、成交量指标卡
+- 策略和风险卡组、参数化交易人格
+- 电脑对手、动态音乐、赛后学习复盘
+- 不连接账户，不读取余额，不执行真实交易
 
 ## 本地运行
 
     npm run dev
 
-打开开发服务器显示的本地地址。网页会通过本站只读接口请求 Binance 官方公开市场 API；切换 BTC、ETH、DOGE 等币种并点击“同步真实行情”后，最新价、24H 数据和前 20 档深度会同步变化。网页不会读取账户或下单。
+打开开发服务器显示的本地地址。选择 4 张能力卡并调整指标参数后，点击“开始盲测挑战”。系统会抽取一段真实历史行情，隐藏日期并逐根播放 K 线。行情结束后公开日期、双方模拟收益、最大回撤、交易次数与策略纪律评分。
 
-如果需要完成真正的 Agent OS 工作流，可在网页复制包含当前交易对和四位自定义角色设定的一键提示词，发送给已连接 Binance MCP 的 Codex，再将 `arena_result` 导回网页。页面会明确区分 `Binance Public API` 实时预览和 `Binance MCP` Agent 裁决。
+## 自动验证
 
-## 用 Binance Agent OS 在 Codex 中搭建
+    npm test
+    npx tsc --noEmit
+    npm run build
 
-Binance Agent OS 是面向 Codex、Claude Desktop、CLI 和 Agent 框架的开发平台，并非一个必须在网页内“新建 Agent”的托管产品。本项目采用官方支持的 **Codex + Binance MCP** 形态。
+## 产品原则
 
-1. 在支持 MCP 的 Codex 环境中打开本项目。
-2. 接入官方 Binance MCP：`https://agent.binance.com/mcp/agentic`，仅授予读取市场数据所需权限。
-3. Codex 会读取项目根目录的 [AGENTS.md](AGENTS.md)，并按 [系统提示词](agent-os/SYSTEM_PROMPT.md) 与 [输出契约](agent-os/OUTPUT_SCHEMA.md) 运行。
-4. 直接复制 [一句话运行指令](RUN_AGENT.md)；Agent 必须先调用 Binance MCP，再生成裁决。
-5. 把回复结尾的 `arena_result` JSON 导入网页，即可展示真实 MCP 证据。
-
-网页导入器内置一份 2026-09-03 17:19 CST 获取的 DOGE/USDT 脱敏只读 MCP 快照，供离线演示。它是有时间戳的历史证据，不冒充当前行情。
-
-## 文件地图
-
-- app/：可交互演示界面
-- agent-os/：Agent OS 系统提示词与输出契约
-- AGENTS.md：Codex 项目级 Agent 定义
-- RUN_AGENT.md：用户可直接发送的一句话指令
-- public/examples/：带时间戳的已验证 Binance MCP 只读快照
-- public/characters/：由内置 ImageGen 生成的四名原创漫画角色立绘
-- submission/：表单文案、90 秒视频脚本和发布检查表
+- 卡牌代表交易指标、参数、策略和风险纪律，而不是抽象攻击力。
+- 基础买卖与止损不依赖抽卡，避免形成错误的风险认知。
+- 对局评分同时考虑收益、最大回撤、费用、过度交易和策略纪律。
+- 历史行情是真实数据，游玩过程中不会向玩家透露未来 K 线。
+- 首版只有模拟现货；不提供杠杆、合约、充值、下注或真实资产奖励。
 
 ## 责任边界
 
-本项目是数据分析和人机决策演示，不构成投资建议。不得绕过地区限制、KYC、2FA、账户权限或 Binance 安全控制。
+本项目只用于教育与娱乐。历史模拟结果不代表未来表现，也不构成投资建议。
