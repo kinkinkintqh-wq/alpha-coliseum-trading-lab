@@ -4,12 +4,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 type ArenaAudio = {
   enabled: boolean;
+  theme: AudioTheme;
+  themes: AudioTheme[];
   toggle: () => void;
+  cycleTheme: () => void;
   strike: (kind?: 'card' | 'reveal' | 'victory') => void;
 };
 
+export type AudioTheme = 'neon' | 'deep' | 'rush' | 'focus';
+const themes: AudioTheme[] = ['neon', 'deep', 'rush', 'focus'];
+
 export function useArenaAudio(intensity = 0): ArenaAudio {
   const [enabled, setEnabled] = useState(false);
+  const [theme, setTheme] = useState<AudioTheme>('neon');
   const contextRef = useRef<AudioContext | null>(null);
   const timerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
@@ -54,19 +61,26 @@ export function useArenaAudio(intensity = 0): ArenaAudio {
       return;
     }
     getContext();
-    const bass = [55, 55, 65.41, 49];
-    const interval = Math.max(210, 390 - intensity * 28);
+    const patterns: Record<AudioTheme, { bass: number[]; interval: number; wave: OscillatorType }> = {
+      neon: { bass: [55, 55, 65.41, 49], interval: 390, wave: 'triangle' },
+      deep: { bass: [41.2, 49, 46.25, 36.71], interval: 540, wave: 'sine' },
+      rush: { bass: [65.41, 73.42, 82.41, 98], interval: 255, wave: 'sawtooth' },
+      focus: { bass: [110, 130.81, 146.83, 123.47], interval: 680, wave: 'sine' },
+    };
+    const pattern = patterns[theme];
+    const interval = Math.max(175, pattern.interval - intensity * (theme === 'rush' ? 16 : 24));
     timerRef.current = window.setInterval(() => {
       const step = stepRef.current++;
-      tone(bass[step % bass.length] * (step % 4 === 3 ? 2 : 1), .18, .018 + intensity * .003, 'triangle');
-      if (step % 4 === 2) tone(880, .025, .012, 'square');
+      tone(pattern.bass[step % pattern.bass.length] * (step % 4 === 3 && theme !== 'deep' ? 2 : 1), theme === 'focus' ? .52 : .18, .012 + intensity * .0025, pattern.wave);
+      if (theme !== 'focus' && step % 4 === 2) tone(theme === 'rush' ? 1320 : 880, .025, .01, 'square');
     }, interval);
     return () => {
       if (timerRef.current) window.clearInterval(timerRef.current);
       timerRef.current = null;
     };
-  }, [enabled, getContext, intensity, tone]);
+  }, [enabled, getContext, intensity, theme, tone]);
 
   const toggle = useCallback(() => setEnabled((value) => !value), []);
-  return { enabled, toggle, strike };
+  const cycleTheme = useCallback(() => setTheme((current) => themes[(themes.indexOf(current) + 1) % themes.length]), []);
+  return { enabled, theme, themes, toggle, cycleTheme, strike };
 }

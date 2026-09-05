@@ -36,8 +36,11 @@ export function MarketChart({ candles, points, index, trades }: { candles: Candl
     <polyline points={line('maSlow')} fill="none" stroke="#21d8ff" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
     {visibleTrades.map((trade) => {
       const offset = trade.index - start;
-      const markerY = trade.side === 'buy' ? y(candles[trade.index].low) + 18 : y(candles[trade.index].high) - 18;
-      return <g key={`${trade.index}-${trade.side}-${trade.quantity}`}><circle cx={x(offset)} cy={markerY} r="9" fill={trade.side === 'buy' ? '#e5ff00' : '#ff2b68'}/><text x={x(offset)} y={markerY+3} textAnchor="middle" fill="#050506" fontSize="8" fontWeight="900">{trade.side === 'buy' ? 'B' : 'S'}</text></g>;
+      const bullish = trade.side === 'buy' || trade.side === 'long';
+      const closing = trade.side === 'close';
+      const markerY = bullish ? y(candles[trade.index].low) + 18 : y(candles[trade.index].high) - 18;
+      const label = trade.side === 'long' ? 'L' : trade.side === 'short' ? 'S' : closing ? 'X' : trade.side === 'liquidation' ? '!' : trade.side === 'buy' ? 'B' : 'S';
+      return <g key={`${trade.index}-${trade.side}-${trade.quantity}`}><circle cx={x(offset)} cy={markerY} r="9" fill={closing ? '#21d8ff' : bullish ? '#e5ff00' : '#ff2b68'}/><text x={x(offset)} y={markerY+3} textAnchor="middle" fill="#050506" fontSize="8" fontWeight="900">{label}</text></g>;
     })}
     <text x="18" y={height-12} fill="#7c8087" fontSize="9">HISTORICAL REPLAY · DATE HIDDEN UNTIL SETTLEMENT</text>
     <g transform={`translate(${width-185},${height-24})`}><line x1="0" x2="24" y1="0" y2="0" stroke="#e5ff00" strokeWidth="2"/><text x="30" y="3" fill="#9da0a6" fontSize="9">FAST MA</text><line x1="88" x2="112" y1="0" y2="0" stroke="#21d8ff" strokeWidth="2"/><text x="118" y="3" fill="#9da0a6" fontSize="9">SLOW MA</text></g>

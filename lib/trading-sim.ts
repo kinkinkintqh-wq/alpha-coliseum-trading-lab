@@ -1,12 +1,15 @@
 export type SimLang = 'zh' | 'en';
-export type SymbolId = 'BTCUSDT' | 'ETHUSDT' | 'DOGEUSDT';
+export type SymbolId = string;
 export type IntervalId = '1m' | '5m' | '15m';
+export type MarketMode = 'spot' | 'perp';
 export type ModuleId = 'ma' | 'macd' | 'wr' | 'volume' | 'discipline' | 'scale' | 'patience' | 'momentum';
 
 export type Candle = { time: number; open: number; high: number; low: number; close: number; volume: number };
 export type SimConfig = {
   symbol: SymbolId;
   interval: IntervalId;
+  mode: MarketMode;
+  leverage: 1 | 2 | 3 | 5;
   maFast: number;
   maSlow: number;
   macdFast: number;
@@ -15,8 +18,10 @@ export type SimConfig = {
   wrPeriod: number;
   modules: ModuleId[];
 };
-export type Trade = { index: number; side: 'buy' | 'sell'; price: number; quantity: number; fee: number; value: number; reason: string };
+export type Trade = { index: number; side: 'buy' | 'sell' | 'long' | 'short' | 'close' | 'liquidation'; price: number; quantity: number; fee: number; value: number; reason: string };
 export type Portfolio = {
+  mode: MarketMode;
+  leverage: number;
   initialCash: number;
   cash: number;
   quantity: number;
@@ -27,6 +32,8 @@ export type Portfolio = {
   maxDrawdown: number;
   disciplineHits: number;
   disciplineTotal: number;
+  realizedPnl: number;
+  liquidated: boolean;
 };
 export type IndicatorPoint = {
   maFast: number | null;
@@ -65,7 +72,7 @@ export const MODULES: Record<ModuleId, {
 };
 
 export const defaultConfig: SimConfig = {
-  symbol: 'BTCUSDT', interval: '5m', maFast: 7, maSlow: 21, macdFast: 8, macdSlow: 17, macdSignal: 6, wrPeriod: 14,
+  symbol: 'BTCUSDT', interval: '5m', mode: 'spot', leverage: 2, maFast: 7, maSlow: 21, macdFast: 8, macdSlow: 17, macdSignal: 6, wrPeriod: 14,
   modules: ['ma', 'macd', 'wr', 'discipline'],
 };
 
@@ -143,15 +150,30 @@ export function personalityFromConfig(config: SimConfig): Personality {
   return { title: { zh: '深流数据侦察者', en: 'Deep-Flow Data Scout' }, subtitle: { zh: '平衡信号，重视确认', en: 'Balanced signals and confirmation' }, traits: { trend, reversal, speed, defense, discipline }, color: '#21d8ff', commander: 'whale' };
 }
 
-export function createPortfolio(initialCash = 10000): Portfolio {
-  return { initialCash, cash: initialCash, quantity: 0, avgEntry: 0, fees: 0, trades: [], peakEquity: initialCash, maxDrawdown: 0, disciplineHits: 0, disciplineTotal: 0 };
+export function createPortfolio(initialCash = 10000, mode: MarketMode = 'spot', leverage = 1): Portfolio {
+  return { mode, leverage, initialCash, cash: initialCash, quantity: 0, avgEntry: 0, fees: 0, trades: [], peakEquity: initialCash, maxDrawdown: 0, disciplineHits: 0, disciplineTotal: 0, realizedPnl: 0, liquidated: false };
 }
 
 export function equity(portfolio: Portfolio, price: number) {
-  return portfolio.cash + portfolio.quantity * price;
+  return portfolio.mode === 'spot' ? portfolio.cash + portfolio.quantity * price : portfolio.cash + (price - portfolio.avgEntry) * portfolio.quantity;
+}
+
+export function availableMargin(portfolio: Portfolio, price: number) {
+  if (portfolio.mode !== 'perp') return portfolio.cash;
+  const used = Math.abs(portfolio.quantity) * price / Math.max(1, portfolio.leverage);
+  return Math.max(0, equity(portfolio, price) - used);
+}
+
+export function liquidationPrice(portfolio: Portfolio) {
+  if (portfolio.mode !== 'perp' || !portfolio.quantity || !portfolio.avgEntry) return null;
+  const maintenance = .005;
+  return portfolio.quantity > 0
+    ? portfolio.avgEntry * (1 - 1 / portfolio.leverage + maintenance)
+    : portfolio.avgEntry * (1 + 1 / portfolio.leverage - maintenance);
 }
 
 export function executeTrade(portfolio: Portfolio, side: 'buy' | 'sell', fraction: number, candle: Candle, index: number, signal: number, reason: string, feeRate = .001, slippageRate = .0004): Portfolio {
+  if (portfolio.mode !== 'spot') return portfolio;
   const safeFraction = Math.max(0, Math.min(1, fraction));
   if (!safeFraction) return portfolio;
   const price = candle.close * (side === 'buy' ? 1 + slippageRate : 1 - slippageRate);
@@ -184,10 +206,55 @@ export function executeTrade(portfolio: Portfolio, side: 'buy' | 'sell', fractio
   };
 }
 
+export function executePerpTrade(portfolio: Portfolio, action: 'long' | 'short' | 'close', fraction: number, candle: Candle, index: number, signal: number, reason: string, feeRate = .0005, slippageRate = .00035): Portfolio {
+  if (portfolio.mode !== 'perp' || portfolio.liquidated) return portfolio;
+  const safeFraction = Math.max(0, Math.min(1, fraction));
+  if (!safeFraction) return portfolio;
+  const direction = action === 'long' ? 1 : action === 'short' ? -1 : 0;
+  const price = candle.close * (action === 'long' ? 1 + slippageRate : action === 'short' ? 1 - slippageRate : portfolio.quantity > 0 ? 1 - slippageRate : 1 + slippageRate);
+  let cash = portfolio.cash;
+  let quantity = portfolio.quantity;
+  let avgEntry = portfolio.avgEntry;
+  let realizedPnl = portfolio.realizedPnl;
+  let tradedQty = 0;
+  if (action === 'close') {
+    tradedQty = Math.abs(quantity) * safeFraction;
+    if (tradedQty <= 0.000000001) return portfolio;
+    const signedClosed = Math.sign(quantity) * tradedQty;
+    const pnl = (price - avgEntry) * signedClosed;
+    const fee = tradedQty * price * feeRate;
+    cash += pnl - fee;
+    realizedPnl += pnl;
+    quantity -= signedClosed;
+    if (Math.abs(quantity) <= 0.000000001) { quantity = 0; avgEntry = 0; }
+    const next = { ...portfolio, cash, quantity, avgEntry, realizedPnl, fees: portfolio.fees + fee, disciplineHits: portfolio.disciplineHits + (signal * signedClosed < 0 ? 1 : 0), disciplineTotal: portfolio.disciplineTotal + 1, trades: [...portfolio.trades, { index, side: 'close' as const, price, quantity: tradedQty, fee, value: tradedQty * price, reason }] };
+    return markPortfolio(next, candle.close);
+  }
+  if (quantity && Math.sign(quantity) !== direction) return portfolio;
+  const margin = availableMargin(portfolio, candle.close) * safeFraction;
+  const notional = margin * portfolio.leverage;
+  tradedQty = notional / price;
+  if (tradedQty <= 0.000000001) return portfolio;
+  const signedAdded = direction * tradedQty;
+  const oldNotional = Math.abs(quantity) * avgEntry;
+  const fee = notional * feeRate;
+  cash -= fee;
+  quantity += signedAdded;
+  avgEntry = Math.abs(quantity) ? (oldNotional + notional) / Math.abs(quantity) : 0;
+  const disciplined = action === 'long' ? signal > 0 : signal < 0;
+  const next = { ...portfolio, cash, quantity, avgEntry, fees: portfolio.fees + fee, disciplineHits: portfolio.disciplineHits + (disciplined ? 1 : 0), disciplineTotal: portfolio.disciplineTotal + 1, trades: [...portfolio.trades, { index, side: action, price, quantity: tradedQty, fee, value: notional, reason }] };
+  return markPortfolio(next, candle.close);
+}
+
 export function markPortfolio(portfolio: Portfolio, price: number): Portfolio {
   const current = equity(portfolio, price);
   const peakEquity = Math.max(portfolio.peakEquity, current);
-  return { ...portfolio, peakEquity, maxDrawdown: Math.max(portfolio.maxDrawdown, peakEquity ? (peakEquity - current) / peakEquity : 0) };
+  const maxDrawdown = Math.max(portfolio.maxDrawdown, peakEquity ? (peakEquity - current) / peakEquity : 0);
+  if (portfolio.mode === 'perp' && portfolio.quantity && current <= Math.abs(portfolio.quantity) * price * .005) {
+    const fee = Math.abs(portfolio.quantity) * price * .001;
+    return { ...portfolio, cash: Math.max(0, current - fee), quantity: 0, avgEntry: 0, fees: portfolio.fees + fee, peakEquity, maxDrawdown, liquidated: true, trades: [...portfolio.trades, { index: portfolio.trades.at(-1)?.index ?? 0, side: 'liquidation', price, quantity: Math.abs(portfolio.quantity), fee, value: Math.abs(portfolio.quantity) * price, reason: 'LIQUIDATION' }] };
+  }
+  return { ...portfolio, peakEquity, maxDrawdown };
 }
 
 export function scorePortfolio(portfolio: Portfolio, price: number) {
@@ -200,6 +267,13 @@ export function scorePortfolio(portfolio: Portfolio, price: number) {
 }
 
 export function runAiStep(portfolio: Portfolio, candle: Candle, point: IndicatorPoint, index: number) {
+  if (portfolio.mode === 'perp') {
+    if (!portfolio.quantity && point.score >= 2) return executePerpTrade(portfolio, 'long', .28, candle, index, point.score, 'AI_LONG');
+    if (!portfolio.quantity && point.score <= -2) return executePerpTrade(portfolio, 'short', .28, candle, index, point.score, 'AI_SHORT');
+    if (portfolio.quantity > 0 && point.score <= -1) return executePerpTrade(portfolio, 'close', 1, candle, index, point.score, 'AI_CLOSE_LONG');
+    if (portfolio.quantity < 0 && point.score >= 1) return executePerpTrade(portfolio, 'close', 1, candle, index, point.score, 'AI_CLOSE_SHORT');
+    return markPortfolio(portfolio, candle.close);
+  }
   if (point.score >= 2 && portfolio.cash > 100) return executeTrade(portfolio, 'buy', .35, candle, index, point.score, 'AI_SIGNAL_BUY');
   if (point.score <= -2 && portfolio.quantity > 0) return executeTrade(portfolio, 'sell', .5, candle, index, point.score, 'AI_SIGNAL_SELL');
   if (portfolio.quantity > 0 && portfolio.avgEntry && candle.close < portfolio.avgEntry * .97) return executeTrade(portfolio, 'sell', 1, candle, index, -1, 'AI_STOP_LOSS');

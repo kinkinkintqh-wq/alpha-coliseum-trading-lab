@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createPortfolio, defaultConfig, executeTrade, indicators, personalityFromConfig, scorePortfolio, type Candle } from '../lib/trading-sim.ts';
+import { createPortfolio, defaultConfig, equity, executePerpTrade, executeTrade, indicators, personalityFromConfig, scorePortfolio, type Candle } from '../lib/trading-sim.ts';
 
 const candles: Candle[] = Array.from({ length: 80 }, (_, index) => {
   const close = 100 + index * .25 + Math.sin(index / 3);
@@ -36,4 +36,15 @@ test('score includes return, drawdown, overtrading and discipline', () => {
 
 test('parameter and module choices generate a reproducible personality', () => {
   assert.deepEqual(personalityFromConfig(defaultConfig), personalityFromConfig({ ...defaultConfig }));
+});
+
+test('perpetual simulator supports isolated long and short positions without a real account', () => {
+  const long = executePerpTrade(createPortfolio(10000, 'perp', 3), 'long', .25, candles[50], 50, 2, 'LONG');
+  assert.ok(long.quantity > 0);
+  assert.ok(equity(long, candles[60].close) > 0);
+  const closedLong = executePerpTrade(long, 'close', 1, candles[60], 60, -1, 'CLOSE');
+  assert.equal(closedLong.quantity, 0);
+  const short = executePerpTrade(createPortfolio(10000, 'perp', 2), 'short', .25, candles[60], 60, -2, 'SHORT');
+  assert.ok(short.quantity < 0);
+  assert.equal(short.mode, 'perp');
 });
