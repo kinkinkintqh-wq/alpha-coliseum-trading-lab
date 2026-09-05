@@ -20,7 +20,7 @@
 
 Alpha Coliseum Trading Lab 是一款使用 Binance 真实市场数据驱动的虚拟交易学习游戏，也是一套可交给 Binance Agent OS 复盘的交易训练工作流。玩家以 10,000 USDT 模拟资金进入未知的真实历史行情，选择现货或 U 本位永续合约模式，使用做多、做空、平仓、止损和 1–5 倍逐仓杠杆完成 3–8 分钟对局。玩家可以组合 MA、MACD、WR、成交量、策略与风险卡，调整周期和参数，形成自己的“交易人格”；电脑对手会在同一段行情中竞技。系统依据收益、最大回撤、手续费、过度交易与纪律执行进行结算，并保存本机历史战绩。项目读取 Binance Spot 与 USDⓈ-M Futures 公开市场、K 线、资金费率、持仓量和多空比数据；赛后可导出 Agent OS Coach Pack，交给连接官方 Binance MCP 的 AI Agent 核验市场事实并生成教育型复盘。所有交易均为本地模拟，不连接账户、不读取余额、不执行真实交易。
 
-公开 Demo：<https://alpha-coliseum-trading-lab.kin684660.chatgpt.site>
+公开 Demo：<https://game.jibai.site>
 
 GitHub：<https://github.com/kinkinkintqh-wq/alpha-coliseum-trading-lab>
 

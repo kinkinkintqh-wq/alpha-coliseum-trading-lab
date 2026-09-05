@@ -12,7 +12,7 @@
 
 所有交易均为模拟，不连接账户、不执行真实下单。希望新手可以先玩，再逐渐理解指标、仓位与风险。
 
-Demo：https://alpha-coliseum-trading-lab.kin684660.chatgpt.site  
+Demo：https://game.jibai.site  
 GitHub：https://github.com/kinkinkintqh-wq/alpha-coliseum-trading-lab
 
 #BinanceAgentOS #AI #Web3 #BuildInPublic

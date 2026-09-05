@@ -6,7 +6,7 @@
 - 作品主题：交易工作流
 - 项目名：Alpha Coliseum Trading Lab｜交易人格实验场
 - GitHub：<https://github.com/kinkinkintqh-wq/alpha-coliseum-trading-lab>
-- 在线 Demo：<https://alpha-coliseum-trading-lab.kin684660.chatgpt.site>
+- 在线 Demo：<https://game.jibai.site>
 - 视频平台：X
 - 截止时间：2026-09-09 07:59（UTC+8）
 

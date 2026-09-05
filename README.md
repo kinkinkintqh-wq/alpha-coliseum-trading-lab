@@ -2,7 +2,8 @@
 
 Alpha Coliseum Trading Lab 是一款由真实 Binance 市场数据驱动的虚拟交易学习游戏。玩家选择指标、调整参数并组建策略卡组，系统据此形成交易人格；随后玩家和电脑在同一段未知的真实历史行情中，使用 10,000 USDT 模拟资金进行现货或逐仓合约训练。
 
-- 在线体验：<https://alpha-coliseum-trading-lab.kin684660.chatgpt.site>
+- 正式站：<https://game.jibai.site>
+- 备用体验：<https://alpha-coliseum-trading-lab.kin684660.chatgpt.site>
 - GitHub：<https://github.com/kinkinkintqh-wq/alpha-coliseum-trading-lab>
 
 ## 当前产品能力
